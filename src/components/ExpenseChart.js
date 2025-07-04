@@ -1,7 +1,4 @@
 import React from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF1919', '#19FFD4', '#FF19B8'];
 
 const ExpenseChart = ({ transactions }) => {
     const expenseData = transactions
@@ -16,26 +13,36 @@ const ExpenseChart = ({ transactions }) => {
             return acc;
         }, []);
 
+    const totalExpense = expenseData.reduce((sum, item) => sum + item.value, 0);
+
+    const getCategoryColor = (index) => {
+        const colors = ['bg-primary', 'bg-accent', 'bg-purple-500', 'bg-pink-500', 'bg-teal-500', 'bg-orange-500', 'bg-indigo-500', 'bg-yellow-500'];
+        return colors[index % colors.length];
+    };
+
     return (
-        <div style={{ width: '100%', height: 300 }}>
-            <ResponsiveContainer>
-                <PieChart>
-                    <Pie
-                        data={expenseData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                    >
-                        {expenseData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => `Rp ${value.toLocaleString()}`} />
-                </PieChart>
-            </ResponsiveContainer>
+        <div className="chart-container">
+            <div className="w-full h-full flex items-center justify-center">
+                <div className="relative w-48 h-48 rounded-full bg-gradient-to-r from-dark-light to-dark-lighter flex items-center justify-center">
+                    {/* This is a placeholder for a more complex chart animation/visual */}
+                    <div className="absolute inset-0 rounded-full border-8 border-transparent border-t-primary border-r-accent border-b-purple-500 border-l-pink-500 animate-spin-slow"></div>
+                    <div className="w-40 h-40 rounded-full bg-dark-light flex items-center justify-center">
+                        <div className="text-center">
+                            <p className="text-xs text-gray-400">Total</p>
+                            <p className="text-xl font-bold">Rp {totalExpense.toLocaleString()}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mt-4">
+                {expenseData.map((entry, index) => (
+                    <div key={entry.name} className="flex items-center">
+                        <div className={`w-3 h-3 rounded-full ${getCategoryColor(index)} mr-2`}></div>
+                        <span className="text-sm">{entry.name}</span>
+                        <span className="text-sm font-medium ml-auto">{((entry.value / totalExpense) * 100).toFixed(0)}%</span>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 };

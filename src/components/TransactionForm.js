@@ -1,156 +1,142 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Row, Col } from 'react-bootstrap';
 import transactionService from '../services/transactionService';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-const TransactionForm = ({ onTransactionAdded, editingTransaction, setEditingTransaction }) => {
-    const [formData, setFormData] = useState({
-        type: 'expense',
-        amount: '',
-        category: '',
-        date: '',
-        description: '',
-    });
-
-    const { type, amount, category, date, description } = formData;
+const TransactionForm = ({ onSave, transactionToEdit, onCancel }) => {
+    const [description, setDescription] = useState('');
+    const [amount, setAmount] = useState('');
+    const [type, setType] = useState('expense'); // 'income' or 'expense'
+    const [category, setCategory] = useState('');
+    const [date, setDate] = useState('');
 
     useEffect(() => {
-        if (editingTransaction) {
-            setFormData({
-                type: editingTransaction.type,
-                amount: editingTransaction.amount,
-                category: editingTransaction.category,
-                date: new Date(editingTransaction.date).toISOString().split('T')[0],
-                description: editingTransaction.description,
-            });
+        if (transactionToEdit) {
+            setDescription(transactionToEdit.description);
+            setAmount(transactionToEdit.amount);
+            setType(transactionToEdit.type);
+            setCategory(transactionToEdit.category);
+            setDate(new Date(transactionToEdit.date).toISOString().split('T')[0]);
         } else {
-            setFormData({
-                type: 'expense',
-                amount: '',
-                category: '',
-                date: '',
-                description: '',
-            });
+            // Reset form if no transaction to edit
+            setDescription('');
+            setAmount('');
+            setType('expense');
+            setCategory('');
+            setDate('');
         }
-    }, [editingTransaction]);
+    }, [transactionToEdit]);
 
-    const onChange = (e) => {
-        setFormData((prevState) => ({
-            ...prevState,
-            [e.target.name]: e.target.value,
-        }));
-    };
-
-    const submitHandler = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || !user.token) {
-            alert('Please login to add transactions');
+            alert('Please log in to add transactions.');
             return;
         }
 
+        const transactionData = {
+            description,
+            amount: parseFloat(amount),
+            type,
+            category,
+            date,
+        };
+
         try {
-            if (editingTransaction) {
-                await transactionService.updateTransaction(editingTransaction._id, formData, user.token);
+            if (transactionToEdit) {
+                await transactionService.updateTransaction(transactionToEdit._id, transactionData, user.token);
                 alert('Transaction updated successfully!');
             } else {
-                await transactionService.addTransaction(formData, user.token);
+                await transactionService.addTransaction(transactionData, user.token);
                 alert('Transaction added successfully!');
             }
-            setFormData({
-                type: 'expense',
-                amount: '',
-                category: '',
-                date: '',
-                description: '',
-            });
-            setEditingTransaction(null); // Clear editing state
-            onTransactionAdded(); // Refresh transactions in Dashboard
+            onSave(); // Callback to refresh transactions in parent component
+            onCancel(); // Close the form
         } catch (error) {
             console.error('Error saving transaction:', error);
-            alert('Failed to save transaction');
+            alert('Failed to save transaction.');
         }
     };
 
     return (
-        <Form onSubmit={submitHandler} className="mb-4">
-            <h2>{editingTransaction ? 'Edit Transaction' : 'Add New Transaction'}</h2>
-            <Row>
-                <Col md={6}>
-                    <Form.Group controlId='type' className="mb-3">
-                        <Form.Label>Type</Form.Label>
-                        <Form.Control
-                            as='select'
-                            name='type'
-                            value={type}
-                            onChange={onChange}
-                        >
-                            <option value='expense'>Expense</option>
-                            <option value='income'>Income</option>
-                        </Form.Control>
-                    </Form.Group>
-                </Col>
-                <Col md={6}>
-                    <Form.Group controlId='amount' className="mb-3">
-                        <Form.Label>Amount</Form.Label>
-                        <Form.Control
-                            type='number'
-                            placeholder='Enter amount'
-                            name='amount'
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="glass-card p-6 rounded-lg shadow-lg w-full max-w-md">
+                <h2 className="text-2xl font-bold mb-4">{transactionToEdit ? 'Edit Transaction' : 'Add New Transaction'}</h2>
+                <form onSubmit={handleSubmit}>
+                    <div className="mb-4">
+                        <label htmlFor="description" className="block text-gray-300 text-sm font-bold mb-2">Description</label>
+                        <input
+                            type="text"
+                            id="description"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-dark-lighter border-dark-lighter"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label htmlFor="amount" className="block text-gray-300 text-sm font-bold mb-2">Amount</label>
+                        <input
+                            type="number"
+                            id="amount"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-dark-lighter border-dark-lighter"
                             value={amount}
-                            onChange={onChange}
+                            onChange={(e) => setAmount(e.target.value)}
                             required
-                        ></Form.Control>
-                    </Form.Group>
-                </Col>
-            </Row>
-            <Row>
-                <Col md={6}>
-                    <Form.Group controlId='category' className="mb-3">
-                        <Form.Label>Category</Form.Label>
-                        <Form.Control
-                            type='text'
-                            placeholder='Enter category'
-                            name='category'
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label htmlFor="type" className="block text-gray-300 text-sm font-bold mb-2">Type</label>
+                        <select
+                            id="type"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-dark-lighter border-dark-lighter"
+                            value={type}
+                            onChange={(e) => setType(e.target.value)}
+                        >
+                            <option value="expense">Expense</option>
+                            <option value="income">Income</option>
+                        </select>
+                    </div>
+                    <div className="mb-4">
+                        <label htmlFor="category" className="block text-gray-300 text-sm font-bold mb-2">Category</label>
+                        <input
+                            type="text"
+                            id="category"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-dark-lighter border-dark-lighter"
                             value={category}
-                            onChange={onChange}
+                            onChange={(e) => setCategory(e.target.value)}
                             required
-                        ></Form.Control>
-                    </Form.Group>
-                </Col>
-                <Col md={6}>
-                    <Form.Group controlId='date' className="mb-3">
-                        <Form.Label>Date</Form.Label>
-                        <Form.Control
-                            type='date'
-                            name='date'
+                        />
+                    </div>
+                    <div className="mb-6">
+                        <label htmlFor="date" className="block text-gray-300 text-sm font-bold mb-2">Date</label>
+                        <input
+                            type="date"
+                            id="date"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-dark-lighter border-dark-lighter"
                             value={date}
-                            onChange={onChange}
+                            onChange={(e) => setDate(e.target.value)}
                             required
-                        ></Form.Control>
-                    </Form.Group>
-                </Col>
-            </Row>
-            <Form.Group controlId='description' className="mb-3">
-                <Form.Label>Description</Form.Label>
-                <Form.Control
-                    as='textarea'
-                    rows={3}
-                    placeholder='Enter description'
-                    name='description'
-                    value={description}
-                    onChange={onChange}
-                ></Form.Control>
-            </Form.Group>
-
-            <Button type='submit' variant='primary'>
-                {editingTransaction ? 'Update Transaction' : 'Add Transaction'}
-            </Button>
-            {editingTransaction && (
-                <Button variant='secondary' onClick={() => setEditingTransaction(null)} className="ms-2">
-                    Cancel Edit
-                </Button>
-            )}
-        </Form>
+                        />
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <button
+                            type="submit"
+                            className="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        >
+                            {transactionToEdit ? 'Update Transaction' : 'Add Transaction'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onCancel}
+                            className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     );
 };
 

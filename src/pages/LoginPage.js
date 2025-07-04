@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Form, Button, Row, Col } from 'react-bootstrap';
 import authService from '../services/authService';
 
 const LoginPage = () => {
@@ -31,44 +30,46 @@ const LoginPage = () => {
     };
 
     return (
-        <Row className="justify-content-md-center">
-            <Col xs={12} md={6}>
-                <h1>Sign In</h1>
-                <Form onSubmit={submitHandler}>
-                    <Form.Group controlId='email'>
-                        <Form.Label>Email Address</Form.Label>
-                        <Form.Control
+        <div className="min-h-screen flex items-center justify-center bg-dark-DEFAULT text-gray-100">
+            <div className="glass-card p-8 rounded-xl shadow-lg w-full max-w-md">
+                <h1 className="text-3xl font-bold text-center mb-6">Sign In</h1>
+                <form onSubmit={submitHandler}>
+                    <div className="mb-4">
+                        <label htmlFor='email' className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
+                        <input
                             type='email'
+                            id='email'
                             placeholder='Enter email'
                             name='email'
                             value={email}
                             onChange={onChange}
-                        ></Form.Control>
-                    </Form.Group>
+                            className="w-full px-3 py-2 bg-dark-light border border-dark-lighter rounded-md text-gray-100 focus:outline-none focus:ring-primary focus:border-primary"
+                        ></input>
+                    </div>
 
-                    <Form.Group controlId='password'>
-                        <Form.Label>Password</Form.Label>
-                        <Form.Control
+                    <div className="mb-6">
+                        <label htmlFor='password' className="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                        <input
                             type='password'
+                            id='password'
                             placeholder='Enter password'
                             name='password'
                             value={password}
                             onChange={onChange}
-                        ></Form.Control>
-                    </Form.Group>
+                            className="w-full px-3 py-2 bg-dark-light border border-dark-lighter rounded-md text-gray-100 focus:outline-none focus:ring-primary focus:border-primary"
+                        ></input>
+                    </div>
 
-                    <Button type='submit' variant='primary' className='mt-3'>
+                    <button type='submit' className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-md transition-colors duration-300">
                         Sign In
-                    </Button>
-                </Form>
+                    </button>
+                </form>
 
-                <Row className='py-3'>
-                    <Col>
-                        New Customer? <Link to={'/register'}>Register</Link>
-                    </Col>
-                </Row>
-            </Col>
-        </Row>
+                <div className="mt-6 text-center">
+                    New Customer? <Link to={'/register'} className="text-primary hover:underline">Register</Link>
+                </div>
+            </div>
+        </div>
     );
 };
 
