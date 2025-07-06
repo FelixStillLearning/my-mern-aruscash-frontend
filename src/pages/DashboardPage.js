@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import transactionService from '../services/transactionService';
 import TransactionForm from '../components/TransactionForm';
@@ -16,7 +16,7 @@ const DashboardPage = () => {
     const [showTransactionForm, setShowTransactionForm] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState(null);
 
-    const fetchTransactions = async () => {
+    const fetchTransactions = useCallback(async () => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || !user.token) {
             navigate('/login');
@@ -48,11 +48,11 @@ const DashboardPage = () => {
                 navigate('/login');
             }
         }
-    };
+    }, [navigate]);
 
     useEffect(() => {
         fetchTransactions();
-    }, [navigate]);
+    }, [fetchTransactions]);
 
     const handleAddTransaction = (type = 'expense') => {
         setEditingTransaction(null);
@@ -314,3 +314,5 @@ const DashboardPage = () => {
         </div>
     );
 };
+
+export default DashboardPage;

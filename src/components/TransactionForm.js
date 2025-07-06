@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import transactionService from '../services/transactionService';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
 
 const TransactionForm = ({ onSave, transactionToEdit, onCancel }) => {
     const [description, setDescription] = useState('');

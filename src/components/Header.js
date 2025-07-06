@@ -1,5 +1,6 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBell, faMoon } from '@fortawesome/free-solid-svg-icons';
 
 const Header = ({ title }) => {
   return (
@@ -14,7 +15,7 @@ const Header = ({ title }) => {
             <FontAwesomeIcon icon={faBell} className="text-gray-400" />
           </button>
           <button className="w-10 h-10 rounded-full bg-dark-lighter flex items-center justify-center hover:bg-primary/20 transition-colors">
-            <FontAwesomeIcon icon="moon" className="text-gray-400" />
+            <FontAwesomeIcon icon={faMoon} className="text-gray-400" />
           </button>
         </div>
       </div>
