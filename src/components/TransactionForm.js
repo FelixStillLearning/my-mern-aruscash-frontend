@@ -1,138 +1,233 @@
 import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
 import transactionService from '../services/transactionService';
-
+import { LoadingButton } from './LoadingSpinner';
 
 const TransactionForm = ({ onSave, transactionToEdit, onCancel }) => {
-    const [description, setDescription] = useState('');
-    const [amount, setAmount] = useState('');
-    const [type, setType] = useState('expense'); // 'income' or 'expense'
-    const [category, setCategory] = useState('');
-    const [date, setDate] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        reset,
+        setValue,
+        watch
+    } = useForm({
+        defaultValues: {
+            description: '',
+            amount: '',
+            type: 'expense',
+            category: '',
+            date: new Date().toISOString().split('T')[0]
+        }
+    });
+
+    const watchType = watch('type');
+
+    // Transaction categories
+    const categories = {
+        expense: [
+            { value: 'housing', label: '🏠 Housing' },
+            { value: 'food', label: '🍽️ Food & Dining' },
+            { value: 'transportation', label: '🚗 Transportation' },
+            { value: 'entertainment', label: '🎬 Entertainment' },
+            { value: 'shopping', label: '🛒 Shopping' },
+            { value: 'healthcare', label: '🏥 Healthcare' },
+            { value: 'utilities', label: '💡 Utilities' },
+            { value: 'education', label: '📚 Education' },
+            { value: 'other', label: '📋 Other' }
+        ],
+        income: [
+            { value: 'salary', label: '💼 Salary' },
+            { value: 'freelance', label: '💻 Freelance' },
+            { value: 'business', label: '🏢 Business' },
+            { value: 'investment', label: '📈 Investment' },
+            { value: 'bonus', label: '💰 Bonus' },
+            { value: 'gift', label: '🎁 Gift' },
+            { value: 'other', label: '📋 Other' }
+        ]
+    };
 
     useEffect(() => {
         if (transactionToEdit) {
-            setDescription(transactionToEdit.description);
-            setAmount(transactionToEdit.amount);
-            setType(transactionToEdit.type);
-            setCategory(transactionToEdit.category);
-            setDate(new Date(transactionToEdit.date).toISOString().split('T')[0]);
+            setValue('description', transactionToEdit.description);
+            setValue('amount', transactionToEdit.amount);
+            setValue('type', transactionToEdit.type);
+            setValue('category', transactionToEdit.category);
+            setValue('date', new Date(transactionToEdit.date).toISOString().split('T')[0]);
         } else {
-            // Reset form if no transaction to edit
-            setDescription('');
-            setAmount('');
-            setType('expense');
-            setCategory('');
-            setDate('');
+            reset({
+                description: '',
+                amount: '',
+                type: 'expense',
+                category: '',
+                date: new Date().toISOString().split('T')[0]
+            });
         }
-    }, [transactionToEdit]);
+    }, [transactionToEdit, setValue, reset]);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const onSubmit = async (data) => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || !user.token) {
-            alert('Please log in to add transactions.');
+            toast.error('Please log in to add transactions.');
             return;
         }
 
+        setIsLoading(true);
         const transactionData = {
-            description,
-            amount: parseFloat(amount),
-            type,
-            category,
-            date,
+            ...data,
+            amount: parseFloat(data.amount),
         };
 
         try {
             if (transactionToEdit) {
                 await transactionService.updateTransaction(transactionToEdit._id, transactionData, user.token);
-                alert('Transaction updated successfully!');
+                toast.success('Transaction updated successfully!');
             } else {
                 await transactionService.addTransaction(transactionData, user.token);
-                alert('Transaction added successfully!');
+                toast.success('Transaction added successfully!');
             }
             onSave(); // Callback to refresh transactions in parent component
             onCancel(); // Close the form
         } catch (error) {
             console.error('Error saving transaction:', error);
-            alert('Failed to save transaction.');
+            toast.error('Failed to save transaction.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="glass-card p-6 rounded-lg shadow-lg w-full max-w-md">
-                <h2 className="text-2xl font-bold mb-4">{transactionToEdit ? 'Edit Transaction' : 'Add New Transaction'}</h2>
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <label htmlFor="description" className="block text-gray-300 text-sm font-bold mb-2">Description</label>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="glass-card p-6 rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+                <h2 className="text-2xl font-bold mb-6 gradient-text">
+                    {transactionToEdit ? '✏️ Edit Transaction' : '➕ Add New Transaction'}
+                </h2>
+                
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    {/* Description */}
+                    <div>
+                        <label htmlFor="description" className="block text-gray-300 text-sm font-semibold mb-2">
+                            Description
+                        </label>
                         <input
                             type="text"
                             id="description"
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-dark-lighter border-dark-lighter"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            required
+                            placeholder="e.g., Grocery shopping, Salary payment"
+                            className="w-full py-3 px-4 text-gray-100 bg-dark-lighter border border-dark-lighter rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                            {...register('description', { 
+                                required: 'Description is required',
+                                minLength: { value: 3, message: 'Description must be at least 3 characters' },
+                                maxLength: { value: 100, message: 'Description must be less than 100 characters' }
+                            })}
                         />
+                        {errors.description && (
+                            <p className="text-red-400 text-xs mt-1">{errors.description.message}</p>
+                        )}
                     </div>
-                    <div className="mb-4">
-                        <label htmlFor="amount" className="block text-gray-300 text-sm font-bold mb-2">Amount</label>
-                        <input
-                            type="number"
-                            id="amount"
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-dark-lighter border-dark-lighter"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            required
-                        />
+
+                    {/* Amount */}
+                    <div>
+                        <label htmlFor="amount" className="block text-gray-300 text-sm font-semibold mb-2">
+                            Amount
+                        </label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-3 text-gray-400">$</span>
+                            <input
+                                type="number"
+                                step="0.01"
+                                id="amount"
+                                placeholder="0.00"
+                                className="w-full py-3 pl-8 pr-4 text-gray-100 bg-dark-lighter border border-dark-lighter rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                                {...register('amount', { 
+                                    required: 'Amount is required',
+                                    min: { value: 0.01, message: 'Amount must be greater than 0' },
+                                    max: { value: 999999.99, message: 'Amount is too large' }
+                                })}
+                            />
+                        </div>
+                        {errors.amount && (
+                            <p className="text-red-400 text-xs mt-1">{errors.amount.message}</p>
+                        )}
                     </div>
-                    <div className="mb-4">
-                        <label htmlFor="type" className="block text-gray-300 text-sm font-bold mb-2">Type</label>
+
+                    {/* Type */}
+                    <div>
+                        <label htmlFor="type" className="block text-gray-300 text-sm font-semibold mb-2">
+                            Type
+                        </label>
                         <select
                             id="type"
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-dark-lighter border-dark-lighter"
-                            value={type}
-                            onChange={(e) => setType(e.target.value)}
+                            className="w-full py-3 px-4 text-gray-100 bg-dark-lighter border border-dark-lighter rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                            {...register('type', { required: 'Type is required' })}
                         >
-                            <option value="expense">Expense</option>
-                            <option value="income">Income</option>
+                            <option value="expense">💸 Expense</option>
+                            <option value="income">💰 Income</option>
                         </select>
+                        {errors.type && (
+                            <p className="text-red-400 text-xs mt-1">{errors.type.message}</p>
+                        )}
                     </div>
-                    <div className="mb-4">
-                        <label htmlFor="category" className="block text-gray-300 text-sm font-bold mb-2">Category</label>
-                        <input
-                            type="text"
+
+                    {/* Category */}
+                    <div>
+                        <label htmlFor="category" className="block text-gray-300 text-sm font-semibold mb-2">
+                            Category
+                        </label>
+                        <select
                             id="category"
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-dark-lighter border-dark-lighter"
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            required
-                        />
+                            className="w-full py-3 px-4 text-gray-100 bg-dark-lighter border border-dark-lighter rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                            {...register('category', { 
+                                required: 'Category is required'
+                            })}
+                        >
+                            <option value="">Select a category</option>
+                            {categories[watchType]?.map((cat) => (
+                                <option key={cat.value} value={cat.value}>
+                                    {cat.label}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.category && (
+                            <p className="text-red-400 text-xs mt-1">{errors.category.message}</p>
+                        )}
                     </div>
-                    <div className="mb-6">
-                        <label htmlFor="date" className="block text-gray-300 text-sm font-bold mb-2">Date</label>
+
+                    {/* Date */}
+                    <div>
+                        <label htmlFor="date" className="block text-gray-300 text-sm font-semibold mb-2">
+                            Date
+                        </label>
                         <input
                             type="date"
                             id="date"
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-dark-lighter border-dark-lighter"
-                            value={date}
-                            onChange={(e) => setDate(e.target.value)}
-                            required
+                            className="w-full py-3 px-4 text-gray-100 bg-dark-lighter border border-dark-lighter rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                            {...register('date', { required: 'Date is required' })}
                         />
+                        {errors.date && (
+                            <p className="text-red-400 text-xs mt-1">{errors.date.message}</p>
+                        )}
                     </div>
-                    <div className="flex items-center justify-between">
-                        <button
-                            type="submit"
-                            className="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                        >
-                            {transactionToEdit ? 'Update Transaction' : 'Add Transaction'}
-                        </button>
+
+                    {/* Buttons */}
+                    <div className="flex items-center justify-end space-x-3 pt-4">
                         <button
                             type="button"
+                            className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors"
                             onClick={onCancel}
-                            className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                            disabled={isLoading}
                         >
                             Cancel
                         </button>
+                        <LoadingButton
+                            type="submit"
+                            isLoading={isLoading}
+                            className="px-6 py-2 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                        >
+                            {transactionToEdit ? 'Update Transaction' : 'Add Transaction'}
+                        </LoadingButton>
                     </div>
                 </form>
             </div>

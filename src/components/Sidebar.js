@@ -6,13 +6,17 @@ import {
   faExchangeAlt, 
   faChartPie, 
   faTags, 
-  faCog 
+  faCog,
+  faChevronDown,
+  faSignOutAlt
 } from '@fortawesome/free-solid-svg-icons';
 import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem('user'));
@@ -21,6 +25,7 @@ const Sidebar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('user');
+    toast.success('Successfully logged out!');
     navigate('/login');
   };
 
@@ -74,8 +79,11 @@ const Sidebar = () => {
         </nav>
 
         {/* User Profile */}
-        <div className="mt-auto mb-4">
-          <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-dark-lighter transition-colors cursor-pointer" onClick={handleLogout}>
+        <div className="mt-auto mb-4 relative">
+          <div 
+            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-dark-lighter transition-colors cursor-pointer" 
+            onClick={() => setShowDropdown(!showDropdown)}
+          >
             <div className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center">
               <span className="font-semibold">{user?.name?.charAt(0) || 'U'}</span>
             </div>
@@ -83,8 +91,33 @@ const Sidebar = () => {
               <p className="font-medium">{user?.name || 'User Account'}</p>
               <p className="text-xs text-gray-400">{user?.email || 'user@example.com'}</p>
             </div>
-            <FontAwesomeIcon icon="chevron-down" className="text-gray-400 text-sm" />
+            <FontAwesomeIcon icon={faChevronDown} className="text-gray-400 text-sm" />
           </div>
+          
+          {/* Dropdown Menu */}
+          {showDropdown && (
+            <div className="absolute bottom-full left-0 w-full mb-2 bg-dark-light border border-dark-lighter rounded-lg shadow-lg">
+              <div className="p-2">
+                <button 
+                  onClick={() => {
+                    setShowDropdown(false);
+                    navigate('/profile');
+                  }}
+                  className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-dark-lighter transition-colors text-sm"
+                >
+                  <FontAwesomeIcon icon={faCog} className="w-4" />
+                  <span>Profile Settings</span>
+                </button>
+                <button 
+                  onClick={handleLogout}
+                  className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-red-500/20 text-red-400 transition-colors text-sm"
+                >
+                  <FontAwesomeIcon icon={faSignOutAlt} className="w-4" />
+                  <span>Logout</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

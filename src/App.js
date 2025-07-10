@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Toaster } from 'react-hot-toast';
 import {
   faCoins,
   faHome,
@@ -28,6 +29,7 @@ import {
   faArrowRight,
   faEdit,
   faTrash,
+  faSignOutAlt,
 } from '@fortawesome/free-solid-svg-icons';
 
 import HomePage from './pages/HomePage';
@@ -64,6 +66,7 @@ library.add(
   faArrowRight,
   faEdit,
   faTrash,
+  faSignOutAlt,
 );
 
 function App() {
@@ -105,6 +108,29 @@ function App() {
           </main>
         </div>
       </div>
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#1e293b',
+            color: '#f1f5f9',
+            border: '1px solid #334155',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#1e293b',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#1e293b',
+            },
+          },
+        }}
+      />
     </Router>
   );
 }
