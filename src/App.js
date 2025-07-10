@@ -36,6 +36,10 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import TransactionsPage from './pages/TransactionsPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import CategoriesPage from './pages/CategoriesPage';
+import SettingsPage from './pages/SettingsPage';
 import PrivateRoute from './components/PrivateRoute';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -103,6 +107,18 @@ function App() {
               <Route path='/register' element={<RegisterPage />} />
               <Route path='/dashboard' element={<PrivateRoute />}>
                 <Route path='/dashboard' element={<DashboardPage />} />
+              </Route>
+              <Route path='/transactions' element={<PrivateRoute />}>
+                <Route path='/transactions' element={<TransactionsPage />} />
+              </Route>
+              <Route path='/analytics' element={<PrivateRoute />}>
+                <Route path='/analytics' element={<AnalyticsPage />} />
+              </Route>
+              <Route path='/categories' element={<PrivateRoute />}>
+                <Route path='/categories' element={<CategoriesPage />} />
+              </Route>
+              <Route path='/settings' element={<PrivateRoute />}>
+                <Route path='/settings' element={<SettingsPage />} />
               </Route>
             </Routes>
           </main>
